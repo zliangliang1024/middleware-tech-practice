@@ -1,14 +1,15 @@
 package liangliang.study.redis.demo.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import javax.annotation.Resource;
 
 /**
  * 通用化配置
@@ -26,11 +27,12 @@ public class CommonConfig {
      * 版权声明：本文为CSDN博主「M丶lang」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
      * 原文链接：https://blog.csdn.net/u010957645/article/details/89340983
      */
-    @Autowired
+    @Resource
     private LettuceConnectionFactory redisConnectionFactory;
 
     // 缓存操作组件 RedisTemplate 的自定义配置
-    @Bean
+    @Bean("myRedis")
+    @Primary
     public RedisTemplate<String,Object> redisTemplate(){
         // 定义RedisTemplate 实例
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
