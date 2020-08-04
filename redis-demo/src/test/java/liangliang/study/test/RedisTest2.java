@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import liangliang.study.redis.demo.App;
 import liangliang.study.redis.demo.bean.Person;
-import liangliang.study.redis.demo.bean.User;
+import liangliang.study.redis.demo.bean.PhoneUser;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -12,14 +12,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.ListOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 单元测试
@@ -77,13 +75,13 @@ public class RedisTest2 {
         ListOperations<String, Object> listOperations = redisTemplate.opsForList();
         for (Person p : list) {
             // 往列表中添加数据-从队尾添加
-            listOperations.leftPush(key,p);
+            listOperations.leftPush(key, p);
         }
         // 获取Redis 中 List 的数据--从对头中遍历获取，直到没有元素为止
         logger.info("--- 获取Redis 中 List的数据-从对头获取--");
         Object result = listOperations.rightPop(key);
         //Person resP;
-        while(result != null){
+        while (result != null) {
 //            resP = (Person) result;
             logger.info("当前数据：{}", result);
             result = listOperations.rightPop(key);
@@ -91,44 +89,76 @@ public class RedisTest2 {
     }
 
     /**
-     * String
+     * Set类型
      */
     @Test
     public void three() {
-        logger.info("----开始 stringRedisTemplate 操作组件实战 ----");
-        // 定义字符串内容及存入缓存的key
-        final String content = "StringRedisTemplate 实战字符串信息";
-        final String key = "redis:three";
-        // Redis 通用操作组件
-        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
-        /* 将字符串写入缓存 */
-        logger.info("写入缓存中的内容：{}", content);
-        valueOperations.set(key, content);
-        Object result = valueOperations.get(key);
-        logger.info("读取缓存中的内容：{}", result);
+
+        // 构造一组用户姓名列表
+        List<String> userList = new ArrayList<>();
+        userList.add("debug");
+        userList.add("jack");
+        userList.add("修罗");
+        userList.add("大圣");
+        userList.add("debug");
+        userList.add("修罗");
+        logger.info("待处理的用户姓名列表，{}", userList);
+        // 遍历访问，删除相同的用户并放入缓存集合中，最终存入缓存中
+        final String key = "redis:test:3";
+        SetOperations<String, Object> setOperations = redisTemplate.opsForSet();
+        for (String str : userList) {
+            setOperations.add(key, str);
+        }
+        // 从缓存中获取用户对象集合
+        Object pop = setOperations.pop(key);
+        while (pop != null) {
+            logger.info("从缓存中获取的用户集合-当前用户：{} ", pop);
+            pop = setOperations.pop(key);
+
+        }
     }
 
     /**
-     * 对象序列化
-     * 采用RedisTemplate讲对象信息序列化微JSON序列化JSON格式字符串后写入和缓存中，
-     * 然后将其读取出来，最后反序列化解析其中的内容并展示在控制台上
+     * 有序集合
      */
     @Test
     public void four() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        logger.info("----开始 StringRedisTemplate 操作组件实战 ----");
-        // 构造对象
-        User user = new User(1, "string", "阿修罗");
+
+        // 构造一组无序的用户手机充值对象列表
+        List<PhoneUser> userList = new ArrayList<>();
+        userList.add(new PhoneUser("103", 130.0));
+        userList.add(new PhoneUser("101", 120.0));
+        userList.add(new PhoneUser("102", 88.0));
+        userList.add(new PhoneUser("105", 99.0));
+        userList.add(new PhoneUser("106", 50.0));
+        userList.add(new PhoneUser("104", 65.0));
+        userList.add(new PhoneUser("107", 78.5));
+        logger.info("构造一组无序的用户手机充值列表：{}", userList);
         // 定义字符串内容及存入缓存的key
-        final String content = mapper.writeValueAsString(user);
-        final String key = "redis:four";
-        // Redis 通用操作组件
-        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
-        // 将字符串写入缓存
-        logger.info("写入缓存中的对象信息：{}", content);
-        valueOperations.set(key, content);
-        Object result = valueOperations.get(key);
-        logger.info("读取缓存中的对象信息：{}", result);
+        final String key = "redis:test:4";
+        // 遍历访问充值对象列表，将信息塞入Redis的缓存列表中
+        // 因为zset在add元素进入缓存后，下次就不能进行更新了，因而为了测试方便
+        // 进行操作之前先清空缓存(实际生产环境中不建议这么使用)
+        redisTemplate.delete(key);
+        ZSetOperations<String, Object> opsForZSet = redisTemplate.opsForZSet();
+        // 将元素添加进有序集合SortedSet中
+        for (PhoneUser p : userList) {
+            opsForZSet.add(key,p,p.getFare());
+        }
+
+        // 前端获取访问充值排名靠前的用户列表
+        Long size = opsForZSet.size(key);
+        logger.info("缓存中的列表长度："+size);
+        // 从小到大排序
+        Set<Object> range = opsForZSet.range(key, 0L, size);
+        // 从大到小
+//        Set<Object> range = opsForZSet.reverseRange(key, 0L, size);
+        // 遍历获取有序集合中的元素
+        for (Object u : range) {
+
+            logger.info("从缓存中读取手机充值记录排序列表，当前记录：{}",u);
+
+        }
     }
 
 
