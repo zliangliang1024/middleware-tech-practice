@@ -3,8 +3,10 @@ package liangliang.study.test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import liangliang.study.redis.demo.App;
+import liangliang.study.redis.demo.bean.Fruit;
 import liangliang.study.redis.demo.bean.Person;
 import liangliang.study.redis.demo.bean.PhoneUser;
+import liangliang.study.redis.demo.bean.Student;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -143,12 +146,12 @@ public class RedisTest2 {
         ZSetOperations<String, Object> opsForZSet = redisTemplate.opsForZSet();
         // 将元素添加进有序集合SortedSet中
         for (PhoneUser p : userList) {
-            opsForZSet.add(key,p,p.getFare());
+            opsForZSet.add(key, p, p.getFare());
         }
 
         // 前端获取访问充值排名靠前的用户列表
         Long size = opsForZSet.size(key);
-        logger.info("缓存中的列表长度："+size);
+        logger.info("缓存中的列表长度：" + size);
         // 从小到大排序
         Set<Object> range = opsForZSet.range(key, 0L, size);
         // 从大到小
@@ -156,9 +159,53 @@ public class RedisTest2 {
         // 遍历获取有序集合中的元素
         for (Object u : range) {
 
-            logger.info("从缓存中读取手机充值记录排序列表，当前记录：{}",u);
+            logger.info("从缓存中读取手机充值记录排序列表，当前记录：{}", u);
 
         }
+    }
+
+    /**
+     * Hash 哈希存储
+     */
+    @Test
+    public void five() {
+        // 构造学生对象列表和水果对象列表
+        List<Student> students = new ArrayList<>();
+        List<Fruit> fruits = new ArrayList<>();
+        // 往学生集合中添加学生对象
+        students.add(new Student("10010", "张三", "three"));
+        students.add(new Student("10086", "李四", "four"));
+        students.add(new Student("10026", "王五", "five"));
+        // 往水果集合中添加水果对象
+        fruits.add(new Fruit("apple", "red"));
+        fruits.add(new Fruit("orange", "橙色"));
+        fruits.add(new Fruit("banana", "黄色"));
+        // 分别遍历不同的对象列表，并采用Hash哈希存储在缓存中
+        final String sKey = "redis:test:5";
+        final String fKey = "redis:test:6";
+        // 获取Hash存储操作值HashOperations，遍历获取集合中的对象并添加进缓存中
+        HashOperations<String, Object, Object> opsForHash = redisTemplate.opsForHash();
+        for (Student s : students) {
+            opsForHash.put(sKey, s.getId(), s);
+        }
+        for (Fruit f : fruits) {
+            opsForHash.put(fKey, f.getName(), f);
+        }
+
+        // 获取学生对象列表与水果对象列表
+        Map<Object, Object> sMap = opsForHash.entries(sKey);
+        logger.info("获取学生对象列表：{}",sMap);
+        Map<Object, Object> fMap = opsForHash.entries(fKey);
+        logger.info("获取水果对象列表：{}",fMap);
+        // 获取指定的学生对象
+        String sField = "10086";
+        Object stu = opsForHash.get(sKey, sField);
+        logger.info("获取指定的学生对象，{}->{}",sField,stu);
+        // 获取指定的水果对象
+        String fField = "orange";
+        Object f = opsForHash.get(fKey, fField);
+        logger.info("获取指定的学生对象，{}->{}",fField,f);
+
     }
 
 
