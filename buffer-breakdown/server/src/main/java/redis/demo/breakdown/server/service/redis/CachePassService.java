@@ -11,7 +11,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import redis.demo.breakdown.server.entity.Item;
-import redis.demo.breakdown.server.service.ItemService123;
+import redis.demo.breakdown.server.service.ItemService;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +30,7 @@ public class CachePassService {
 
     // mysql
     @Autowired
-    private ItemService123 itemService123;
+    private ItemService itemService;
 
     // 定义缓存中key命名的前缀
     private static final String keyPrefix = "item:";
@@ -60,7 +60,7 @@ public class CachePassService {
             // 表示缓存中没有该商品
             logger.info("----获取商品详情---缓存中不存在该商品，从数据库中获取---商品编号为：{}",itemCode);
             // 从数据库中获取该商品
-            item = itemService123.selectItemByCode1(itemCode);
+            item = itemService.selectItemByCode(itemCode);
             if(item !=null){
                 // 如果数据库中查到该商品，，则将其序列化后写入缓存中
                 opsForValue.set(key,objectMapper.writeValueAsString(item));

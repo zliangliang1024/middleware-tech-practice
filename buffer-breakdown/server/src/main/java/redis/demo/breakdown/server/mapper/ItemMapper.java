@@ -5,8 +5,8 @@ import org.apache.ibatis.annotations.Mapper;
 import redis.demo.breakdown.server.entity.Item;
 
 @Mapper
-public interface ItemMapper123 {
+public interface ItemMapper {
 
     // 根据商品编码，查询商品详情
-    Item selectItemByCode1(@Param("code") String code);
+    Item selectItemByCode(@Param("code") String code);
 }

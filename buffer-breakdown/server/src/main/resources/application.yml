@@ -22,5 +22,5 @@ spring:
   # 开启Mybatis下划线命名转驼峰命名
   # mybatis.configuration.map-underscore-to-camel-case=true
 mybatis:
-  type-aliases-package: redis.demo.breakdown.server.model.entity
-  mapper-locations: classpath:mappers.dd/*Mapper.xml
+  type-aliases-package: redis.demo.breakdown.server.mapper
+  mapper-locations: classpath:mappers/*Mapper.xml

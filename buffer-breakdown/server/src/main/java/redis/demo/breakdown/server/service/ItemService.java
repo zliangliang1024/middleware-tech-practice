@@ -3,7 +3,7 @@ package redis.demo.breakdown.server.service;
 
 import redis.demo.breakdown.server.entity.Item;
 
-public interface ItemService123 {
+public interface ItemService {
 
-    Item selectItemByCode1(String code);
+    Item selectItemByCode(String code);
 }
