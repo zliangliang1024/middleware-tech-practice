@@ -1,0 +1,26 @@
+server:
+  port: 8010
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/redis-demo?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: 123456
+    lettuce:
+      pool:
+        min-idle: 5
+        max-idle: 10
+        max-active: 8
+        max-wait: 1ms
+      shutdown-timeout: 100ms
+
+  # 开启Mybatis下划线命名转驼峰命名
+  # mybatis.configuration.map-underscore-to-camel-case=true
+mybatis:
+  type-aliases-package: liangliang.study.red.envelops.mapper
+  mapper-locations: classpath:mappers/*Mapper.xml
